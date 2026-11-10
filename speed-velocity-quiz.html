@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 3: Motion in a Straight Line</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#FAF6EE;
+    --paper-2:#F3EDE0;
+    --grid: rgba(43,69,112,0.07);
+    --ink:#1F2A37;
+    --ink-soft:#5B6678;
+    --amber:#C8932A;
+    --blue:#2B4570;
+    --correct:#3D7A52;
+    --correct-bg:#E4F0E6;
+    --incorrect:#B23A28;
+    --incorrect-bg:#F6E4E0;
+    --border:#D9CFB8;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px 14px 60px;
+    position:relative;
+    overflow-x:hidden;
+  }
+
+  body::before, body::after{
+    content:''; position:fixed; border-radius:50%; filter:blur(60px); opacity:.16; z-index:-1; pointer-events:none;
+  }
+  body::before{ width:300px; height:300px; background:#2F8F8B; top:-90px; left:-90px; animation:driftA 22s ease-in-out infinite; }
+  body::after{ width:260px; height:260px; background:#7B5EA7; bottom:-70px; right:-70px; animation:driftB 26s ease-in-out infinite; }
+  @keyframes driftA{ 0%,100%{ transform:translate(0,0);} 50%{ transform:translate(36px,28px);} }
+  @keyframes driftB{ 0%,100%{ transform:translate(0,0);} 50%{ transform:translate(-30px,-24px);} }
+
+  .app{ width:100%; max-width:560px; }
+
+  .credit-tag{ position:fixed; top:10px; right:14px; font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.04em; color:var(--ink-soft); opacity:.7; z-index:5; pointer-events:none; }
+  @media (max-width:380px){ .credit-tag{ font-size:9.5px; top:8px; right:10px; } }
+  h1,h2,h3{ font-family:'Source Serif 4', Georgia, serif; margin:0; }
+  button:focus-visible{ outline:3px solid var(--blue); outline-offset:2px; }
+
+  /* ---------- Header ---------- */
+  .header{ margin-bottom:18px; }
+  .eyebrow{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:4px; }
+  .header h1{ font-size:22px; font-weight:700; color:var(--blue); line-height:1.25; }
+
+  /* ---------- Timer / progress ---------- */
+  .time-bar-track{ width:100%; height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:14px; }
+  .time-bar-fill{ height:100%; width:100%; background:linear-gradient(90deg,var(--blue),var(--amber)); transition:width 1s linear, background .3s ease; }
+  .time-bar-fill.warning{ background:var(--incorrect); }
+
+  .timer-row{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .qcount{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft); }
+  .timer{ font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:15px; padding:6px 13px; border-radius:6px; background:var(--paper-2); border:1px solid var(--border); color:var(--blue); transition:background .3s, color .3s, border-color .3s; }
+  .timer.warning{ color:#fff; background:var(--incorrect); border-color:var(--incorrect); animation:pulse 1s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.55} }
+
+  .qprogress-track{ width:100%; height:6px; background:var(--paper-2); border:1px solid var(--border); border-radius:4px; overflow:hidden; margin-bottom:12px; }
+  .qprogress-fill{ height:100%; width:2.2%; background:linear-gradient(90deg,#2F8F8B,#7B5EA7,#C8932A); transition:width .4s ease; }
+
+  .jump-toggle{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; font-weight:600; background:var(--paper-2); border:1px solid var(--border); color:var(--blue); padding:7px 12px; border-radius:6px; cursor:pointer; margin-bottom:10px; transition:transform .1s ease, border-color .15s ease; }
+  .jump-toggle:hover{ border-color:var(--blue); }
+  .jump-toggle:active{ transform:scale(.97); }
+
+  .jump-panel{ background:#fff; border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:14px; max-height:0; overflow:hidden; opacity:0; transition:max-height .3s ease, opacity .25s ease, padding .3s ease; }
+  .jump-panel.open{ max-height:600px; opacity:1; padding:14px; overflow-y:auto; }
+  .jump-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(30px,1fr)); gap:6px; }
+  .jump-btn{ aspect-ratio:1; min-height:30px; border-radius:6px; border:1.5px solid var(--border); background:#fff; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace; font-size:11.5px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:transform .08s ease, border-color .15s ease, background .15s ease; }
+  .jump-btn:active{ transform:scale(.93); }
+  .jump-btn.answered{ background:var(--paper-2); border-color:var(--amber); color:var(--ink); }
+  .jump-btn.current{ border-color:var(--blue); border-width:2px; color:var(--blue); background:#EEF2F8; }
+
+  /* ---------- Specimen card ---------- */
+  .card{ background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 1px 0 var(--border), 0 10px 24px -14px rgba(31,42,55,0.28); position:relative; overflow:hidden; margin-bottom:18px; }
+  .card-tab{ position:absolute; left:0; top:0; bottom:0; width:6px; transition:background .3s ease; }
+  .card-watermark{ position:absolute; right:-26px; top:-26px; opacity:.06; animation:spin 50s linear infinite; pointer-events:none; transition:color .3s ease; }
+  @keyframes spin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  .card-inner{ padding:26px 22px 22px 28px; position:relative; }
+
+  @keyframes cardIn{ from{ opacity:0; transform:translateY(10px);} to{ opacity:1; transform:translateY(0);} }
+  .card.animate{ animation:cardIn .35s ease; }
+
+  .question-text{ font-size:16.5px; color:var(--ink); margin-bottom:12px; line-height:1.5; }
+  .exp-box{ margin-top:6px; padding:12px 14px; background:var(--paper-2); border-left:4px solid var(--amber); border-radius:6px; font-size:13.5px; line-height:1.5; color:var(--ink); }
+  .formula-display{ font-family:'IBM Plex Mono', monospace; font-size:28px; font-weight:600; color:var(--ink); text-align:center; padding:22px 10px; background:var(--paper-2); border:1.5px dashed var(--border); border-radius:6px; margin-bottom:6px; letter-spacing:.01em; transition:border-color .3s ease; }
+
+  /* ---------- Options ---------- */
+  .options{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+  .option{ display:flex; align-items:center; gap:12px; text-align:left; border:1.5px solid var(--border); background:#fff; border-radius:8px; padding:13px 14px; font-size:15px; color:var(--ink); cursor:pointer; font-family:'IBM Plex Mono', monospace; transition:border-color .15s ease, background .15s ease, transform .08s ease, box-shadow .15s ease; min-height:48px; }
+  .option:hover{ border-color:var(--blue); box-shadow:0 4px 12px -6px rgba(43,69,112,.35); }
+  .option:active{ transform:scale(.985); }
+  .option .letter{ flex:0 0 auto; width:24px; height:24px; border-radius:50%; background:var(--paper-2); color:var(--ink-soft); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; transition:background .15s ease, color .15s ease; }
+  .option.selected{ border-color:var(--blue); background:#EEF2F8; }
+  .option.selected .letter{ background:var(--blue); color:#fff; }
+
+  /* ---------- Review-mode options (read-only, color-coded) ---------- */
+  .option.review-option{ cursor:default; }
+  .option.review-option:hover{ border-color:var(--border); box-shadow:none; }
+  .option.review-option.correct-answer{ border-color:var(--correct); background:var(--correct-bg); }
+  .option.review-option.correct-answer .letter{ background:var(--correct); color:#fff; }
+  .option.review-option.wrong-answer{ border-color:var(--incorrect); background:var(--incorrect-bg); }
+  .option.review-option.wrong-answer .letter{ background:var(--incorrect); color:#fff; }
+  .option.review-option.neutral{ opacity:.5; }
+
+  /* ---------- Controls ---------- */
+  .controls{ display:flex; flex-direction:column; gap:12px; }
+  .controls-info{ display:flex; justify-content:space-between; align-items:center; }
+  .score-chip{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft); }
+  .btn-link{ background:none; border:none; color:var(--blue); font-family:'IBM Plex Mono', monospace; font-size:12.5px; text-decoration:underline; cursor:pointer; padding:4px; }
+  .controls-nav{ display:flex; gap:10px; }
+  .btn{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:14.5px; font-weight:600; background:var(--blue); color:#fff; border:none; border-radius:8px; padding:12px 22px; cursor:pointer; min-height:46px; flex:1; transition:transform .08s ease, box-shadow .15s ease; }
+  .btn:hover{ box-shadow:0 6px 16px -8px rgba(43,69,112,.5); }
+  .btn:active{ transform:scale(.97); }
+  .btn:disabled{ background:var(--border); color:var(--ink-soft); cursor:not-allowed; box-shadow:none; }
+  .btn-ghost{ background:transparent; color:var(--blue); border:1.5px solid var(--blue); }
+  .btn-ghost:disabled{ border-color:var(--border); }
+  .btn-full{ width:100%; flex:none; }
+
+  .submit-confirm{ background:var(--incorrect-bg); border:1px solid var(--incorrect); border-radius:8px; padding:14px; margin-bottom:12px; display:none; }
+  .submit-confirm.show{ display:block; }
+  .submit-confirm p{ margin:0 0 12px; font-size:13.5px; color:var(--incorrect); }
+  .submit-confirm .row{ display:flex; gap:10px; }
+
+  /* ---------- Panels ---------- */
+  .panel{ background:#fff; border:1px solid var(--border); border-radius:12px; padding:30px 24px; text-align:center; box-shadow:0 10px 24px -14px rgba(31,42,55,0.28); position:relative; overflow:hidden; }
+  .panel p{ color:var(--ink-soft); font-size:14.5px; line-height:1.6; margin:14px 0 22px; }
+  .field-label{ text-align:left; font-size:12.5px; color:var(--ink-soft); margin-bottom:6px; font-family:'IBM Plex Mono', monospace; letter-spacing:.04em; }
+  .input-field{ width:100%; padding:12px 14px; font-size:15px; border:1.5px solid var(--border); border-radius:8px; margin-bottom:16px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; background:var(--paper-2); color:var(--ink); transition:border-color .15s ease, background .15s ease; }
+
+  .password-wrap{ position:relative; margin-bottom:16px; }
+  .password-wrap .input-field{ margin-bottom:0; padding-right:46px; }
+  .password-toggle{ position:absolute; right:4px; top:0; bottom:0; width:38px; display:flex; align-items:center; justify-content:center; background:none; border:none; cursor:pointer; color:var(--ink-soft); padding:0; transition:color .15s ease; }
+  .password-toggle:hover{ color:var(--blue); }
+  .password-toggle svg{ width:19px; height:19px; display:block; }
+  .input-field:focus{ outline:none; border-color:var(--blue); background:#fff; }
+  .error-msg{ color:var(--incorrect); font-size:13px; margin:-6px 0 14px; text-align:left; display:none; }
+  .error-msg.show{ display:block; }
+  .hint{ font-size:12px; color:var(--ink-soft); margin-top:18px; line-height:1.5; }
+
+  .score-ring-wrap{ position:relative; width:150px; height:150px; margin:8px auto 4px; }
+  .ring-bg{ fill:none; stroke:var(--paper-2); stroke-width:10; }
+  .ring-fg{ fill:none; stroke:var(--amber); stroke-width:10; stroke-linecap:round; transform:rotate(-90deg); transform-origin:50% 50%; stroke-dasharray:377; stroke-dashoffset:377; transition:stroke-dashoffset 1.1s cubic-bezier(.22,.9,.3,1); }
+  .score-ring-label{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .score-ring-label .num{ font-family:'IBM Plex Mono', monospace; font-size:34px; font-weight:700; color:var(--blue); }
+  .score-ring-label .denom{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--ink-soft); }
+  .score-message{ font-size:14.5px; color:var(--ink-soft); margin:10px 0 20px; line-height:1.5; }
+  .timeup-note{ font-size:13px; color:var(--incorrect); background:var(--incorrect-bg); border-radius:6px; padding:8px 12px; margin-bottom:10px; display:none; }
+  .timeup-note.show{ display:block; }
+
+  .review-toggle{ width:100%; font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; background:var(--paper-2); border:1px solid var(--border); color:var(--blue); padding:11px; border-radius:8px; cursor:pointer; margin-bottom:10px; text-align:left; }
+  .review-list{ display:none; max-height:340px; overflow-y:auto; border:1px solid var(--border); border-radius:8px; margin-bottom:18px; text-align:left; }
+  .review-list.open{ display:block; }
+  .review-row{ display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-bottom:1px solid var(--paper-2); border-left:4px solid var(--border); font-size:12.5px; cursor:pointer; transition:background .15s ease; }
+  .review-row:hover{ background:var(--paper-2); }
+  .review-row:active{ background:#EEF2F8; }
+  .review-row:last-child{ border-bottom:none; }
+  .review-row.correct{ border-left-color:var(--correct); }
+  .review-row.incorrect{ border-left-color:var(--incorrect); }
+  .review-row.unanswered{ border-left-color:var(--ink-soft); }
+  .review-icon{ flex:0 0 auto; font-weight:700; }
+  .review-row.correct .review-icon{ color:var(--correct); }
+  .review-row.incorrect .review-icon{ color:var(--incorrect); }
+  .review-row.unanswered .review-icon{ color:var(--ink-soft); }
+  .review-body{ flex:1; }
+  .review-q{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink); margin-bottom:2px; display:flex; justify-content:space-between; gap:8px; }
+  .review-q .chevron{ color:var(--ink-soft); flex:0 0 auto; }
+  .review-ans{ color:var(--ink-soft); font-size:11.5px; line-height:1.5; }
+
+  .confetti-container{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:50; }
+  .confetti-piece{ position:absolute; top:-10px; width:8px; height:8px; border-radius:2px; opacity:.9; animation-name:confettiFall; animation-timing-function:ease-in; animation-fill-mode:forwards; }
+  @keyframes confettiFall{ 0%{ transform:translateY(0) rotate(0deg); opacity:.9;} 100%{ transform:translateY(105vh) rotate(380deg); opacity:0;} }
+
+  @media (max-width:380px){
+    .formula-display{ font-size:22px; padding:18px 6px; }
+    .card-inner{ padding:22px 16px 18px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="credit-tag">Birhanu Ba</div>
+<div class="app">
+
+  <div class="header">
+   
+    <h1>UNIT 3 : MOTION IN A STRAIGHT LINE</h1>
+  </div>
+    
+     <span style="color: red;"><b>Distance, Displacement, Speed, Velocity &amp; Time</b></span>
+  <!-- LOGIN SCREEN -->
+  <div class="panel" id="loginScreen">
+    <h2 style="color:var(--blue); font-size:19px;">Enter to Begin</h2>
+    <p>Type your name and the access code given by your teacher.</p>
+    <div class="field-label"><b><span style="color:brown;">Student name</span></b></div>
+    <input type="text" class="input-field" id="nameInput" autocomplete="off">
+    <div class="field-label"><b><span style="color:brown;">Access code</span></b></div>
+    <div class="password-wrap">
+      <input type="password" class="input-field" id="codeInput" placeholder="" autocomplete="off">
+      <button type="button" class="password-toggle" id="toggleCodeVisibility" aria-label="Show access code">
+        <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+      </button>
+    </div>
+    <div class="error-msg" id="loginError"></div>
+    <button class="btn btn-full" id="loginBtn">Continue</button>
+    <div class="hint">Code:  <span style="color:blue;"><b> SPEED</b></span></div>
+  </div>
+
+  <!-- START SCREEN -->
+  <div class="panel" id="startScreen" style="display:none;">
+    <h2 style="color:var(--blue); font-size:19px;" id="welcomeMsg">52-Question Challenge</h2>
+    <p>Work through the set at your own pace. Jump between questions anytime, and your answers stay hidden until you submit. <strong>45-minute time limit</strong> — auto-submits when time's up.</p>
+    <button class="btn btn-full" id="startBtn">Start Quiz</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen" style="display:none;">
+    <div class="time-bar-track"><div class="time-bar-fill" id="timeBarFill"></div></div>
+    <div class="timer-row">
+      <span class="qcount" id="qcount">Question 1 / 52</span>
+      <span class="timer" id="timerDisplay">40:00</span>
+    </div>
+    <div class="qprogress-track"><div class="qprogress-fill" id="qProgressFill"></div></div>
+    <button class="jump-toggle" id="jumpToggle">▦ Jump to question</button>
+    <div class="jump-panel" id="jumpPanel"><div class="jump-grid" id="jumpGrid"></div></div>
+
+    <div class="card">
+      <div class="card-tab" id="cardTab"></div>
+      <svg class="card-watermark" id="cardWatermark" viewBox="0 0 100 100" width="170" height="170">
+        <g stroke="currentColor" fill="none" stroke-width="2.2">
+          <ellipse cx="50" cy="50" rx="42" ry="16"/>
+          <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(60 50 50)"/>
+          <ellipse cx="50" cy="50" rx="42" ry="16" transform="rotate(120 50 50)"/>
+        </g>
+        <circle cx="50" cy="50" r="4" fill="currentColor"/>
+      </svg>
+      <div class="card-inner">
+        <div class="question-text" id="questionText" style="display:none;"></div>
+        <div class="formula-display" id="formulaDisplay" style="display:none;"></div>
+        <div class="options" id="optionsList"></div>
+      </div>
+    </div>
+
+    <div class="submit-confirm" id="submitConfirm">
+      <p id="submitConfirmText"></p>
+      <div class="row">
+        <button class="btn" id="confirmSubmitBtn">Submit Anyway</button>
+        <button class="btn btn-ghost" id="cancelSubmitBtn">Keep Answering</button>
+      </div>
+    </div>
+
+    <div class="controls" id="mainControls">
+      <div class="controls-info">
+        <span class="score-chip" id="answeredChip">Answered: 0 / 52</span>
+        <button class="btn-link" id="submitBtn">Submit Quiz</button>
+      </div>
+      <div class="controls-nav">
+        <button class="btn btn-ghost" id="prevBtn" disabled>Previous</button>
+        <button class="btn" id="nextBtn">Next</button>
+      </div>
+    </div>
+
+    <div class="controls" id="reviewControls" style="display:none;">
+      <div class="controls-info">
+        <span class="score-chip" id="reviewStatusChip"></span>
+        <button class="btn-link" id="backToResultsBtn">← Back to Results</button>
+      </div>
+      <div class="controls-nav">
+        <button class="btn btn-ghost" id="reviewPrevBtn">Previous</button>
+        <button class="btn" id="reviewNextBtn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- END SCREEN -->
+  <div class="panel" id="endScreen" style="display:none;">
+    <div class="eyebrow" style="text-align:left; margin-bottom:6px;">Results</div>
+    <h2 style="color:var(--blue); font-size:20px;" id="endTitle">Quiz Complete</h2>
+    <div class="timeup-note" id="timeupNote"></div>
+
+    <div class="score-ring-wrap">
+      <svg width="150" height="150" viewBox="0 0 150 150">
+        <circle class="ring-bg" cx="75" cy="75" r="60"/>
+        <circle class="ring-fg" id="scoreRingFg" cx="75" cy="75" r="60"/>
+      </svg>
+      <div class="score-ring-label">
+        <div class="num" id="finalScore">0</div>
+        <div class="denom" id="finalDenom">out of 52</div>
+      </div>
+    </div>
+    <p class="score-message" id="scoreMessage"></p>
+
+    <button class="review-toggle" id="reviewToggle">Review Your Answers ▾</button>
+    <div class="review-list" id="reviewList"></div>
+
+    <button class="btn btn-ghost btn-full" id="restartBtn">Restart Quiz</button>
+  </div>
+
+</div>
+
+<script>
+const ACCESS_CODE = "SPEED"; // change this and share with students
+const TOTAL_TIME_SECONDS = 45 * 60; // 52 minutes — adjust as needed
+const ACCENT_PALETTE = ["#2F8F8B","#7B5EA7","#C8932A","#C1583A","#3D7A52","#2B4570"];
+
+const QUESTIONS = [
+{
+"question": "A person walks 200 m north in 40 s. What is their average velocity?",
+"options": [
+"5 m/s south",
+"5 m/s north",
+"0.2 m/s north",
+"8 m/s north"
+],
+"correct": 1,
+"exp": "v = Δx/Δt = 200 ÷ 40 = 5 m/s north."
+},
+{
+"question": "How is instantaneous velocity different from average velocity?",
+"options": [
+"Instantaneous velocity is the velocity at one exact moment; average velocity is total displacement ÷ total time",
+"Instantaneous velocity uses total distance; average velocity uses displacement",
+"They are always equal for any motion",
+"Average velocity is measured at one moment; instantaneous velocity over a whole trip"
+],
+"correct": 0,
+"exp": "Average velocity = total displacement ÷ total time. Instantaneous velocity is the velocity at a single instant (the limit of Δx/Δt as Δt → 0)."
+},
+{
+"question": "A car travels 150 km east in 2 h and then 50 km west in 1 h. What is its average velocity for the entire trip?",
+"options": [
+"66.7 km/h east",
+"100 km/h east",
+"33.3 km/h west",
+"33.3 km/h east"
+],
+"correct": 3,
+"exp": "Displacement = 150 − 50 = 100 km east. Time = 3 h. v = 100/3 ≈ 33.3 km/h east."
+},
+{
+"question": "A cyclist's speedometer shows 20 km/h at a specific moment. What is this speed called?",
+"options": [
+"Average speed",
+"Average velocity",
+"Instantaneous speed",
+"Displacement"
+],
+"correct": 2,
+"exp": "A speedometer reads the speed at one instant: instantaneous speed."
+},
+{
+"question": "A runner completes a 400 m lap in 60 s and finishes at the starting point. What is their average velocity?",
+"options": [
+"6.67 m/s",
+"0 m/s",
+"400 m/s",
+"60 m/s"
+],
+"correct": 1,
+"exp": "Displacement = 0 (start = finish), so average velocity = 0. (Average speed would be 400/60 ≈ 6.67 m/s.)"
+},
+{
+"question": "A vehicle moves 100 m east in 10 s and then 50 m south in 5 s. What is the magnitude of the average velocity for the whole journey?",
+"options": [
+"7.45 m/s",
+"10 m/s",
+"11.2 m/s",
+"5 m/s"
+],
+"correct": 0,
+"exp": "Displacement = √(100² + 50²) ≈ 111.8 m. Time = 15 s. v ≈ 7.45 m/s."
+},
+{
+"question": "A vehicle moves 100 m east in 10 s and then 50 m south in 5 s. In what direction is the average velocity for the whole journey?",
+"options": [
+"63.4° south of east",
+"26.6° north of east",
+"45° south of east",
+"26.6° south of east"
+],
+"correct": 3,
+"exp": "tan θ = 50/100, so θ = tan⁻¹(0.5) ≈ 26.6° south of east."
+},
+{
+"question": "A runner jogs 60 m due East along a straight track in 10.0 s, then jogs 20 m due West in 5.0 s. What is her total distance traveled?",
+"options": [
+"40 m",
+"60 m",
+"80 m",
+"20 m"
+],
+"correct": 2,
+"exp": "Distance = 60 + 20 = 80 m."
+},
+{
+"question": "A runner jogs 60 m due East along a straight track in 10.0 s, then jogs 20 m due West in 5.0 s. What is her net displacement?",
+"options": [
+"80 m east",
+"40 m east",
+"40 m west",
+"60 m east"
+],
+"correct": 1,
+"exp": "Displacement = 60 − 20 = 40 m east."
+},
+{
+"question": "A runner jogs 60 m due East along a straight track in 10.0 s, then jogs 20 m due West in 5.0 s. What is her average speed for the entire trip?",
+"options": [
+"5.33 m/s",
+"2.67 m/s",
+"8 m/s",
+"4 m/s"
+],
+"correct": 0,
+"exp": "Average speed = 80 m ÷ 15 s ≈ 5.33 m/s."
+},
+{
+"question": "A runner jogs 60 m due East along a straight track in 10.0 s, then jogs 20 m due West in 5.0 s. What is her average velocity for the entire trip?",
+"options": [
+"5.33 m/s east",
+"4 m/s east",
+"2.67 m/s west",
+"2.67 m/s east"
+],
+"correct": 3,
+"exp": "Average velocity = 40 m ÷ 15 s ≈ 2.67 m/s east."
+},
+{
+"question": "A car travels a distance of 240 m in 12 s. Calculate its speed.",
+"options": [
+"0.05 m/s",
+"28.8 m/s",
+"20 m/s",
+"40 m/s"
+],
+"correct": 2,
+"exp": "v = d/t = 240 ÷ 12 = 20 m/s."
+},
+{
+"question": "A student walks 300 m in 60 s and then runs 200 m in 40 s. Calculate the average speed.",
+"options": [
+"10 m/s",
+"5 m/s",
+"8.3 m/s",
+"0.2 m/s"
+],
+"correct": 1,
+"exp": "Total distance 500 m ÷ total time 100 s = 5 m/s."
+},
+{
+"question": "A car travels 120 km in 2 hours and another 180 km in 3 hours. Calculate its average speed for the entire journey.",
+"options": [
+"60 km/h",
+"30 km/h",
+"120 km/h",
+"150 km/h"
+],
+"correct": 0,
+"exp": "300 km ÷ 5 h = 60 km/h."
+},
+{
+"question": "A student walks 100 m east and then 40 m west in 20 s. Calculate the total distance.",
+"options": [
+"60 m",
+"100 m",
+"40 m",
+"140 m"
+],
+"correct": 3,
+"exp": "Distance = 100 + 40 = 140 m."
+},
+{
+"question": "A student walks 100 m east and then 40 m west in 20 s. Calculate the displacement.",
+"options": [
+"140 m east",
+"40 m east",
+"60 m east",
+"60 m west"
+],
+"correct": 2,
+"exp": "Displacement = 100 − 40 = 60 m east."
+},
+{
+"question": "A student walks 100 m east and then 40 m west in 20 s. Calculate the average speed.",
+"options": [
+"3 m/s",
+"7 m/s",
+"5 m/s",
+"2 m/s"
+],
+"correct": 1,
+"exp": "Speed = 140 ÷ 20 = 7 m/s."
+},
+{
+"question": "A student walks 100 m east and then 40 m west in 20 s. Calculate the average velocity.",
+"options": [
+"3 m/s east",
+"7 m/s east",
+"5 m/s east",
+"2 m/s east"
+],
+"correct": 0,
+"exp": "Velocity = 60 ÷ 20 = 3 m/s east."
+},
+{
+"question": "A student walks 50 m east and then returns 50 m west in 25 s. Calculate the distance.",
+"options": [
+"0 m",
+"50 m",
+"25 m",
+"100 m"
+],
+"correct": 3,
+"exp": "Distance = 50 + 50 = 100 m."
+},
+{
+"question": "A student walks 50 m east and then returns 50 m west in 25 s. Calculate the displacement.",
+"options": [
+"50 m",
+"100 m",
+"0 m",
+"25 m"
+],
+"correct": 2,
+"exp": "The student ends where they started, so displacement = 0."
+},
+{
+"question": "A student walks 50 m east and then returns 50 m west in 25 s. Calculate the average speed.",
+"options": [
+"2 m/s",
+"4 m/s",
+"0 m/s",
+"1 m/s"
+],
+"correct": 1,
+"exp": "Speed = 100 ÷ 25 = 4 m/s."
+},
+{
+"question": "A student walks 50 m east and then returns 50 m west in 25 s. Calculate the average velocity.",
+"options": [
+"0 m/s",
+"4 m/s",
+"2 m/s",
+"100 m/s"
+],
+"correct": 0,
+"exp": "Velocity = displacement ÷ time = 0 ÷ 25 = 0."
+},
+{
+"question": "A car travels 60 km north in 1 h and then 80 km south in 2 h. Calculate the total distance.",
+"options": [
+"20 km",
+"80 km",
+"60 km",
+"140 km"
+],
+"correct": 3,
+"exp": "Distance = 60 + 80 = 140 km."
+},
+{
+"question": "A car travels 60 km north in 1 h and then 80 km south in 2 h. Calculate the displacement.",
+"options": [
+"140 km south",
+"20 km north",
+"20 km south",
+"60 km south"
+],
+"correct": 2,
+"exp": "Displacement = 80 − 60 = 20 km south."
+},
+{
+"question": "A car travels 60 km north in 1 h and then 80 km south in 2 h. Calculate the average speed.",
+"options": [
+"6.67 km/h",
+"46.7 km/h",
+"70 km/h",
+"20 km/h"
+],
+"correct": 1,
+"exp": "Speed = 140 km ÷ 3 h ≈ 46.7 km/h."
+},
+{
+"question": "A car travels 60 km north in 1 h and then 80 km south in 2 h. Calculate the average velocity.",
+"options": [
+"6.67 km/h south",
+"46.7 km/h south",
+"10 km/h south",
+"6.67 km/h north"
+],
+"correct": 0,
+"exp": "Velocity = 20 km ÷ 3 h ≈ 6.67 km/h south."
+},
+{
+"question": "A car travels at 72 km/h. Convert its speed into m/s.",
+"options": [
+"259.2 m/s",
+"72 m/s",
+"200 m/s",
+"20 m/s"
+],
+"correct": 3,
+"exp": "Divide by 3.6: 72 ÷ 3.6 = 20 m/s."
+},
+{
+"question": "A motorcycle moves at 15 m/s. Convert its speed into km/h.",
+"options": [
+"4.17 km/h",
+"15 km/h",
+"54 km/h",
+"150 km/h"
+],
+"correct": 2,
+"exp": "Multiply by 3.6: 15 × 3.6 = 54 km/h."
+},
+{
+"question": "A car travels the first 100 km at 40 km/h and the next 100 km at 60 km/h. Find the average speed for the entire journey.",
+"options": [
+"50 km/h",
+"48 km/h",
+"60 km/h",
+"40 km/h"
+],
+"correct": 1,
+"exp": "t₁ = 100/40 = 2.5 h, t₂ = 100/60 ≈ 1.667 h. Total 200 km ÷ 4.167 h = 48 km/h (not 50, because more time is spent at the slower speed)."
+},
+{
+"question": "A student completes one full round of a circular track of radius 7 m in 22 s (use π = 22/7). Calculate the distance travelled.",
+"options": [
+"44 m",
+"0 m",
+"22 m",
+"7 m"
+],
+"correct": 0,
+"exp": "Distance = 2πr = 2 × (22/7) × 7 = 44 m."
+},
+{
+"question": "A student completes one full round of a circular track of radius 7 m in 22 s (use π = 22/7). Calculate the displacement.",
+"options": [
+"44 m",
+"14 m",
+"22 m",
+"0 m"
+],
+"correct": 3,
+"exp": "One full round ends at the starting point, so displacement = 0."
+},
+{
+"question": "A student completes one full round of a circular track of radius 7 m in 22 s (use π = 22/7). Calculate the average speed.",
+"options": [
+"0 m/s",
+"3.14 m/s",
+"2 m/s",
+"0.5 m/s"
+],
+"correct": 2,
+"exp": "Speed = 44 ÷ 22 = 2 m/s."
+},
+{
+"question": "A student completes one full round of a circular track of radius 7 m in 22 s (use π = 22/7). Calculate the average velocity.",
+"options": [
+"2 m/s",
+"0 m/s",
+"44 m/s",
+"7 m/s"
+],
+"correct": 1,
+"exp": "Velocity = 0 ÷ 22 = 0."
+},
+{
+"question": "A car moves at a constant speed of 15 m/s for 20 s. Calculate the distance travelled.",
+"options": [
+"300 m",
+"0.75 m",
+"35 m",
+"30 m"
+],
+"correct": 0,
+"exp": "d = vt = 15 × 20 = 300 m."
+},
+{
+"question": "A train travels 600 m at a constant speed of 20 m/s. Calculate the time taken.",
+"options": [
+"120 s",
+"0.033 s",
+"12 000 s",
+"30 s"
+],
+"correct": 3,
+"exp": "t = d/v = 600 ÷ 20 = 30 s."
+},
+{
+"question": "A bus travels at 72 km/h for 2.5 hours. Calculate the distance travelled.",
+"options": [
+"28.8 km",
+"74.5 km",
+"180 km",
+"144 km"
+],
+"correct": 2,
+"exp": "d = 72 × 2.5 = 180 km."
+},
+{
+"question": "A vehicle moves at 54 km/h for 40 seconds. Calculate the distance travelled in metres.",
+"options": [
+"2160 m",
+"600 m",
+"60 m",
+"360 m"
+],
+"correct": 1,
+"exp": "54 km/h = 15 m/s. d = 15 × 40 = 600 m."
+},
+{
+"question": "An object moves at 8 m/s for 10 s and then at 12 m/s for 5 s. Calculate its total distance.",
+"options": [
+"140 m",
+"100 m",
+"60 m",
+"200 m"
+],
+"correct": 0,
+"exp": "d₁ = 8 × 10 = 80 m, d₂ = 12 × 5 = 60 m. Total = 140 m."
+},
+{
+"question": "An object moves at 8 m/s for 10 s and then at 12 m/s for 5 s. Calculate its average speed.",
+"options": [
+"10 m/s",
+"12 m/s",
+"8 m/s",
+"9.33 m/s"
+],
+"correct": 3,
+"exp": "Average speed = 140 m ÷ 15 s ≈ 9.33 m/s (not 10, the simple mean of the two speeds)."
+},
+{
+"question": "A cyclist travels 30 km North, then turns around and travels 30 km South, returning home. If the whole trip took 2 hours, what was their average speed?",
+"options": [
+"0 km/h",
+"60 km/h",
+"30 km/h",
+"15 km/h"
+],
+"correct": 2,
+"exp": "Total distance = 60 km (the displacement of 0 would give velocity). Speed = 60 ÷ 2 = 30 km/h."
+},
+{
+"question": "A train travels at a constant 90 km/h. How long does it take to cover 225 km?",
+"options": [
+"0.4 h",
+"2.5 h",
+"1.5 h",
+"4 h"
+],
+"correct": 1,
+"exp": "t = d/v = 225 ÷ 90 = 2.5 h."
+},
+{
+"question": "A cyclist rides at a constant 18 km/h for 20 minutes. How far does the cyclist travel?",
+"options": [
+"6 km",
+"360 km",
+"0.9 km",
+"18 km"
+],
+"correct": 0,
+"exp": "20 min = 1/3 h. d = 18 × 1/3 = 6 km."
+},
+{
+"question": "A swimmer swims 50 m down a pool in 25 s and returns 50 m to the start in 20 s. Calculate the average speed.",
+"options": [
+"2.25 m/s",
+"4.44 m/s",
+"0 m/s",
+"2.22 m/s"
+],
+"correct": 3,
+"exp": "Distance = 100 m, time = 45 s. Speed = 100/45 ≈ 2.22 m/s."
+},
+{
+"question": "A swimmer swims 50 m down a pool in 25 s and returns 50 m to the start in 20 s. Calculate the average velocity.",
+"options": [
+"2.22 m/s",
+"4.44 m/s",
+"0 m/s",
+"1.11 m/s"
+],
+"correct": 2,
+"exp": "The swimmer ends at the start, so displacement = 0 and average velocity = 0."
+},
+{
+"question": "A bus travels 90 km at 45 km/h, rests for 30 minutes, then travels another 60 km in 1 h. Calculate the total time.",
+"options": [
+"3 h",
+"3.5 h",
+"2.5 h",
+"4.5 h"
+],
+"correct": 1,
+"exp": "Driving time on the first leg = 90/45 = 2 h. Total = 2 + 0.5 + 1 = 3.5 h."
+},
+{
+"question": "A bus travels 90 km at 45 km/h, rests for 30 minutes, then travels another 60 km in 1 h. Calculate the average speed including the rest.",
+"options": [
+"42.9 km/h",
+"50 km/h",
+"52.5 km/h",
+"37.5 km/h"
+],
+"correct": 0,
+"exp": "Total distance = 150 km. Average speed = 150 ÷ 3.5 ≈ 42.9 km/h."
+},
+{
+"question": "If a car travels 120 kilometers in 2 hours, what is its average speed?",
+"options": [
+"240 km/h",
+"30 km/h",
+"118 km/h",
+"60 km/h"
+],
+"correct": 3,
+"exp": "Average speed = 120 km ÷ 2 h = 60 km/h."
+},
+{
+"question": "How does instantaneous speed differ from average speed?",
+"options": [
+"Instantaneous speed is total distance ÷ total time; average speed is at one moment",
+"They always have the same value",
+"Instantaneous speed is the speed at one exact moment; average speed is total distance ÷ total time",
+"Average speed includes direction; instantaneous speed does not"
+],
+"correct": 2,
+"exp": "Average speed = total distance ÷ total time. Instantaneous speed is the speed at one moment, such as a speedometer reading."
+},
+{
+"question": "A runner completes a 400-meter lap in 50 seconds. What is the runner's average speed?",
+"options": [
+"0 m/s",
+"8 m/s",
+"12.5 m/s",
+"350 m/s"
+],
+"correct": 1,
+"exp": "Average speed = 400 ÷ 50 = 8 m/s."
+},
+{
+"question": "If a cyclist's speedometer reads 25 km/h at a specific moment, what is this speed called?",
+"options": [
+"Instantaneous speed",
+"Average speed",
+"Displacement",
+"Average velocity"
+],
+"correct": 0,
+"exp": "It is the speed at that exact moment: instantaneous speed."
+},
+{
+"question": "A train travels 300 km in 4 h and then 150 km in 2 h. What is the average speed for the entire journey?",
+"options": [
+"37.5 km/h",
+"450 km/h",
+"150 km/h",
+"75 km/h"
+],
+"correct": 3,
+"exp": "Total distance = 450 km, total time = 6 h. Speed = 450 ÷ 6 = 75 km/h."
+},
+{
+"question": "A car travels at 60 km/h for 1 hour and then at 80 km/h for another hour. What is its average speed for the entire trip?",
+"options": [
+"140 km/h",
+"60 km/h",
+"70 km/h",
+"80 km/h"
+],
+"correct": 2,
+"exp": "Distance = 60 + 80 = 140 km in 2 h. Average speed = 70 km/h (equal times, so the simple mean)."
+}
+];
+
+let current = 0;
+let score = 0;
+let studentName = "";
+let timeRemaining = TOTAL_TIME_SECONDS;
+let timerInterval = null;
+const answers = new Array(QUESTIONS.length).fill(null);
+
+const loginScreen = document.getElementById('loginScreen');
+const startScreen = document.getElementById('startScreen');
+const quizScreen = document.getElementById('quizScreen');
+const endScreen = document.getElementById('endScreen');
+const jumpToggle = document.getElementById('jumpToggle');
+const jumpPanel = document.getElementById('jumpPanel');
+const jumpGrid = document.getElementById('jumpGrid');
+const cardTab = document.getElementById('cardTab');
+const cardWatermark = document.getElementById('cardWatermark');
+const questionText = document.getElementById('questionText');
+const formulaDisplay = document.getElementById('formulaDisplay');
+const optionsList = document.getElementById('optionsList');
+const answeredChip = document.getElementById('answeredChip');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const timerDisplay = document.getElementById('timerDisplay');
+const timeBarFill = document.getElementById('timeBarFill');
+const qProgressFill = document.getElementById('qProgressFill');
+const qcount = document.getElementById('qcount');
+const submitBtn = document.getElementById('submitBtn');
+const submitConfirm = document.getElementById('submitConfirm');
+const scoreRingFg = document.getElementById('scoreRingFg');
+const mainControls = document.getElementById('mainControls');
+const reviewControls = document.getElementById('reviewControls');
+const reviewStatusChip = document.getElementById('reviewStatusChip');
+const backToResultsBtn = document.getElementById('backToResultsBtn');
+const reviewPrevBtn = document.getElementById('reviewPrevBtn');
+const reviewNextBtn = document.getElementById('reviewNextBtn');
+const timeBarTrack = document.querySelector('.time-bar-track');
+
+let reviewMode = false;
+let reviewIdx = 0;
+
+function letters(i){ return ['A','B','C','D'][i]; }
+
+function buildJumpPanel(){
+  jumpGrid.innerHTML = QUESTIONS.map((q,i)=>{
+    let cls = 'jump-btn';
+    if(answers[i] !== null) cls += ' answered';
+    if(i === current) cls += ' current';
+    return `<button type="button" class="${cls}" data-idx="${i}">${i+1}</button>`;
+  }).join('');
+  jumpGrid.querySelectorAll('.jump-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      current = parseInt(b.dataset.idx, 10);
+      loadQuestion();
+      jumpPanel.classList.remove('open');
+    });
+  });
+}
+
+jumpToggle.addEventListener('click', ()=>{
+  jumpPanel.classList.toggle('open');
+});
+
+function updateAnsweredChip(){
+  const n = answers.filter(a=>a!==null).length;
+  answeredChip.textContent = `Answered: ${n} / ${QUESTIONS.length}`;
+}
+
+function loadQuestion(){
+  const q = QUESTIONS[current];
+  const accent = ACCENT_PALETTE[current % ACCENT_PALETTE.length];
+  qcount.textContent = `Question ${current+1} / ${QUESTIONS.length}`;
+  qProgressFill.style.width = (((current+1)/QUESTIONS.length)*100) + '%';
+  cardTab.style.background = accent;
+  cardWatermark.style.color = accent;
+  buildJumpPanel();
+  updateAnsweredChip();
+
+  if(q.formula){
+    formulaDisplay.style.display = 'block';
+    formulaDisplay.textContent = q.formula;
+    formulaDisplay.style.borderColor = accent;
+    questionText.style.display = 'block';
+    questionText.textContent = 'What is the IUPAC name of this compound?';
+  } else {
+    formulaDisplay.style.display = 'none';
+    questionText.style.display = 'block';
+    questionText.textContent = q.question;
+  }
+
+  optionsList.innerHTML = '';
+  q.options.forEach((opt, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'option' + (answers[current] === idx ? ' selected' : '');
+    btn.innerHTML = `<span class="letter">${letters(idx)}</span><span>${opt}</span>`;
+    btn.addEventListener('click', ()=>selectOption(idx));
+    optionsList.appendChild(btn);
+  });
+
+  prevBtn.disabled = current === 0;
+  nextBtn.textContent = current === QUESTIONS.length-1 ? 'Finish' : 'Next';
+
+  const card = document.querySelector('.card');
+  card.classList.remove('animate');
+  void card.offsetWidth;
+  card.classList.add('animate');
+}
+
+function loadReviewQuestion(idx){
+  const q = QUESTIONS[idx];
+  const accent = ACCENT_PALETTE[idx % ACCENT_PALETTE.length];
+  qcount.textContent = `Question ${idx+1} / ${QUESTIONS.length}`;
+  qProgressFill.style.width = (((idx+1)/QUESTIONS.length)*100) + '%';
+  cardTab.style.background = accent;
+  cardWatermark.style.color = accent;
+
+  if(q.formula){
+    formulaDisplay.style.display = 'block';
+    formulaDisplay.textContent = q.formula;
+    formulaDisplay.style.borderColor = accent;
+    questionText.style.display = 'block';
+    questionText.textContent = 'What is the IUPAC name of this compound?';
+  } else {
+    formulaDisplay.style.display = 'none';
+    questionText.style.display = 'block';
+    questionText.textContent = q.question;
+  }
+
+  const userIdx = answers[idx];
+  const status = userIdx===null ? 'unanswered' : (userIdx===q.correct ? 'correct' : 'incorrect');
+  reviewStatusChip.textContent = status==='correct' ? '✓ Correct' : (status==='incorrect' ? '✗ Incorrect' : '○ Not answered');
+  reviewStatusChip.style.color = status==='correct' ? 'var(--correct)' : (status==='incorrect' ? 'var(--incorrect)' : 'var(--ink-soft)');
+
+  optionsList.innerHTML = '';
+  q.options.forEach((opt, i)=>{
+    const div = document.createElement('div');
+    let cls = 'option review-option';
+    let icon = '';
+    if(i === q.correct){ cls += ' correct-answer'; icon = ' ✓'; }
+    else if(i === userIdx){ cls += ' wrong-answer'; icon = ' ✗'; }
+    else { cls += ' neutral'; }
+    div.className = cls;
+    div.innerHTML = `<span class="letter">${letters(i)}</span><span>${opt}${icon}</span>`;
+    optionsList.appendChild(div);
+  });
+
+  if(q.exp){ const e=document.createElement('div'); e.className='exp-box'; e.innerHTML='<b>Solution:</b> '+q.exp; optionsList.appendChild(e); }
+  reviewPrevBtn.disabled = idx === 0;
+  reviewNextBtn.textContent = idx === QUESTIONS.length-1 ? 'Done' : 'Next';
+
+  const card = document.querySelector('.card');
+  card.classList.remove('animate');
+  void card.offsetWidth;
+  card.classList.add('animate');
+}
+
+function openReview(idx){
+  reviewMode = true;
+  reviewIdx = idx;
+  endScreen.style.display = 'none';
+  quizScreen.style.display = 'block';
+  timeBarTrack.style.display = 'none';
+  timerDisplay.style.display = 'none';
+  jumpToggle.style.display = 'none';
+  jumpPanel.classList.remove('open');
+  mainControls.style.display = 'none';
+  reviewControls.style.display = 'flex';
+  loadReviewQuestion(reviewIdx);
+}
+
+function closeReview(){
+  reviewMode = false;
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+  timeBarTrack.style.display = '';
+  timerDisplay.style.display = '';
+  jumpToggle.style.display = '';
+  mainControls.style.display = '';
+  reviewControls.style.display = 'none';
+}
+
+backToResultsBtn.addEventListener('click', closeReview);
+reviewPrevBtn.addEventListener('click', ()=>{ if(reviewIdx > 0){ reviewIdx--; loadReviewQuestion(reviewIdx); } });
+reviewNextBtn.addEventListener('click', ()=>{
+  if(reviewIdx === QUESTIONS.length-1){ closeReview(); }
+  else { reviewIdx++; loadReviewQuestion(reviewIdx); }
+});
+
+function selectOption(idx){
+  answers[current] = idx;
+  optionsList.querySelectorAll('.option').forEach((el,i)=>{
+    el.classList.toggle('selected', i===idx);
+  });
+  updateAnsweredChip();
+  qProgressFill.style.width = (((current+1)/QUESTIONS.length)*100) + '%';
+}
+
+prevBtn.addEventListener('click', ()=>{ if(current > 0){ current--; loadQuestion(); } });
+nextBtn.addEventListener('click', ()=>{
+  if(current === QUESTIONS.length-1){ triggerSubmitFlow(); }
+  else { current++; loadQuestion(); }
+});
+submitBtn.addEventListener('click', triggerSubmitFlow);
+
+function triggerSubmitFlow(){
+  const unansweredCount = answers.filter(a=>a===null).length;
+  if(unansweredCount > 0){
+    document.getElementById('submitConfirmText').textContent =
+      `${unansweredCount} question${unansweredCount===1?'':'s'} still unanswered. Submit anyway?`;
+    submitConfirm.classList.add('show');
+  } else {
+    finalizeQuiz('manual');
+  }
+}
+document.getElementById('confirmSubmitBtn').addEventListener('click', ()=>{
+  submitConfirm.classList.remove('show');
+  finalizeQuiz('manual');
+});
+document.getElementById('cancelSubmitBtn').addEventListener('click', ()=>{
+  submitConfirm.classList.remove('show');
+});
+
+const codeInput = document.getElementById('codeInput');
+const toggleCodeVisibility = document.getElementById('toggleCodeVisibility');
+const EYE_OPEN = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>`;
+const EYE_CLOSED = `<path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.6 18.6 0 0 1 5.07-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.6 18.6 0 0 1-2.16 3.19"></path><line x1="1" y1="1" x2="23" y2="23"></line>`;
+toggleCodeVisibility.addEventListener('click', ()=>{
+  const isHidden = codeInput.type === 'password';
+  codeInput.type = isHidden ? 'text' : 'password';
+  document.getElementById('eyeIcon').innerHTML = isHidden ? EYE_CLOSED : EYE_OPEN;
+  toggleCodeVisibility.setAttribute('aria-label', isHidden ? 'Hide access code' : 'Show access code');
+});
+
+document.getElementById('loginBtn').addEventListener('click', ()=>{
+  const nameVal = document.getElementById('nameInput').value.trim();
+  const codeVal = document.getElementById('codeInput').value.trim();
+  const err = document.getElementById('loginError');
+  if(!nameVal){ err.textContent = 'Please enter your name.'; err.classList.add('show'); return; }
+  if(codeVal !== ACCESS_CODE){ err.textContent = 'Incorrect access code. Ask your teacher.'; err.classList.add('show'); return; }
+  err.classList.remove('show');
+  studentName = nameVal;
+  document.getElementById('welcomeMsg').textContent = `${QUESTIONS.length}-Question Challenge`;
+  loginScreen.style.display = 'none';
+  startScreen.style.display = 'block';
+});
+
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  startScreen.style.display = 'none';
+  quizScreen.style.display = 'block';
+  loadQuestion();
+  startTimer();
+});
+
+document.getElementById('reviewToggle').addEventListener('click', ()=>{
+  const list = document.getElementById('reviewList');
+  const open = list.classList.toggle('open');
+  document.getElementById('reviewToggle').textContent = open ? 'Review Your Answers ▴' : 'Review Your Answers ▾';
+});
+
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  current = 0; score = 0;
+  for(let i=0;i<answers.length;i++) answers[i] = null;
+  timeRemaining = TOTAL_TIME_SECONDS;
+  reviewMode = false;
+  timeBarTrack.style.display = '';
+  timerDisplay.style.display = '';
+  jumpToggle.style.display = '';
+  mainControls.style.display = '';
+  reviewControls.style.display = 'none';
+  submitConfirm.classList.remove('show');
+  jumpPanel.classList.remove('open');
+  document.getElementById('reviewList').classList.remove('open');
+  document.getElementById('reviewList').innerHTML = '';
+  document.getElementById('reviewToggle').textContent = 'Review Your Answers ▾';
+  scoreRingFg.style.transition = 'none';
+  scoreRingFg.style.strokeDashoffset = '377';
+  document.querySelectorAll('.confetti-container').forEach(c=>c.remove());
+  endScreen.style.display = 'none';
+  quizScreen.style.display = 'block';
+  loadQuestion();
+  startTimer();
+  requestAnimationFrame(()=>{ scoreRingFg.style.transition = ''; });
+});
+
+function startTimer(){
+  clearInterval(timerInterval);
+  updateTimerDisplay();
+  timerInterval = setInterval(()=>{
+    timeRemaining--;
+    updateTimerDisplay();
+    if(timeRemaining <= 0){
+      clearInterval(timerInterval);
+      finalizeQuiz('timeup');
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(timeRemaining/60);
+  const s = timeRemaining % 60;
+  timerDisplay.textContent = `⏱ ${m}:${s.toString().padStart(2,'0')}`;
+  const warn = timeRemaining <= 60;
+  timerDisplay.classList.toggle('warning', warn);
+  timeBarFill.classList.toggle('warning', warn);
+  timeBarFill.style.width = Math.max(0, (timeRemaining/TOTAL_TIME_SECONDS)*100) + '%';
+}
+
+function animateCount(el, target, duration){
+  const startTime = performance.now();
+  function tick(now){
+    const progress = Math.min((now-startTime)/duration, 1);
+    el.textContent = Math.floor(progress*target);
+    if(progress < 1) requestAnimationFrame(tick); else el.textContent = target;
+  }
+  requestAnimationFrame(tick);
+}
+
+function celebrate(){
+  const container = document.createElement('div');
+  container.className = 'confetti-container';
+  document.body.appendChild(container);
+  for(let i=0;i<28;i++){
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    piece.style.left = (Math.random()*100) + '%';
+    piece.style.background = ACCENT_PALETTE[Math.floor(Math.random()*ACCENT_PALETTE.length)];
+    piece.style.animationDelay = (Math.random()*0.4) + 's';
+    piece.style.animationDuration = (1.8 + Math.random()*1.2) + 's';
+    container.appendChild(piece);
+  }
+  setTimeout(()=>container.remove(), 3400);
+}
+
+function getResultTier(sc){
+  const p = sc / QUESTIONS.length;
+  if(p < 0.4) return { title:'Keep at it', message:"Motion problems take practice. Go through the review below, read each solution, and focus on the difference between distance and displacement, and between speed and velocity. Then try again." };
+  if(p < 0.65) return { title:'Good progress', message:"You have a solid base. Check the questions you missed in the review below, especially direction and unit conversions, and the next attempt will go better." };
+  if(p < 0.85) return { title:'Well done', message:"Strong, consistent work. Review the few you missed below and watch for traps such as average speed vs. the mean of two speeds." };
+  return { title:'Outstanding work', message:"Excellent command of speed, velocity, distance and displacement. Great job." };
+}
+
+function finalizeQuiz(reason){
+  clearInterval(timerInterval);
+  quizScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+
+  let sc = 0;
+  QUESTIONS.forEach((q,i)=>{ if(answers[i] !== null && answers[i] === q.correct) sc++; });
+  score = sc;
+
+  document.getElementById('finalDenom').textContent = `out of ${QUESTIONS.length}`;
+  const tier = getResultTier(score);
+  document.getElementById('endTitle').textContent = studentName ? `${tier.title}, ${studentName}` : tier.title;
+  animateCount(document.getElementById('finalScore'), score, 900);
+
+  const circumference = 377;
+  const pct = score / QUESTIONS.length;
+  requestAnimationFrame(()=>{
+    scoreRingFg.style.strokeDashoffset = circumference * (1 - pct);
+  });
+
+  document.getElementById('scoreMessage').textContent = tier.message;
+
+  const unanswered = answers.filter(a=>a===null).length;
+  const note = document.getElementById('timeupNote');
+  if(unanswered > 0){
+    note.textContent = reason === 'timeup'
+      ? `Time's up — the quiz auto-submitted. ${unanswered} question${unanswered===1?'':'s'} not attempted.`
+      : `${unanswered} question${unanswered===1?'':'s'} were left unanswered.`;
+    note.classList.add('show');
+  } else {
+    note.classList.remove('show');
+  }
+
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = QUESTIONS.map((q,i)=>{
+    const userIdx = answers[i];
+    const status = userIdx===null ? 'unanswered' : (userIdx===q.correct ? 'correct' : 'incorrect');
+    const icon = status==='correct' ? '✓' : (status==='incorrect' ? '✗' : '○');
+    const prompt = q.formula || q.question;
+    const yourAns = userIdx!==null ? q.options[userIdx] : 'Not answered';
+    const extra = status==='incorrect' ? `<br>Correct: ${q.options[q.correct]}` : '';
+    return `<div class="review-row ${status}" data-idx="${i}">
+      <span class="review-icon">${icon}</span>
+      <div class="review-body">
+        <div class="review-q"><span>Q${i+1}. ${prompt}</span><span class="chevron">›</span></div>
+        <div class="review-ans">Your answer: ${yourAns}${extra}</div>
+      </div>
+    </div>`;
+  }).join('');
+  reviewList.querySelectorAll('.review-row').forEach(row=>{
+    row.addEventListener('click', ()=>{ openReview(parseInt(row.dataset.idx, 10)); });
+  });
+
+  if(score > 0) celebrate();
+}
+</script>
+</body>
+</html>
